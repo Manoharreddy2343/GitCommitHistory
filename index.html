@@ -43,6 +43,10 @@
     	repoAddress : "https://api.github.com/repos/tensorflow/tensorflow/stats/commit_activity",
         monthsNames : ['Jan','Feb','March','April','May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
    	    commitsByMonth : {},
+		lastDate: (function(){
+			var now = new Date();
+            return new Date(now.setMonth(now.getMonth() - 11));
+		}()),   
    	    drawChart : function(){
    	    	console.log(this.repoAddress);
    	    	 $.get(this.repoAddress, (response)=> {
@@ -66,14 +70,18 @@
             		let tmpDate = new Date(week.week*1000);
             		let month = tmpDate.getMonth();
 					let noOfDays = this.daysInMonth(month, tmpDate.getFullYear());
-					if(tmpDate.getDate() + 7 > noOfDays){
-						console.log("change if months in the week of "+tmpDate);
-					}
-            		if(this.commitsByMonth[month]){
-            			this.commitsByMonth[month] = this.commitsByMonth[month] + (week.days).reduce((a, b) => a + b, 0);
-            		}else{
-            			this.commitsByMonth[month] = (week.days).reduce((a, b) => a + b, 0);
-            		}
+						for(let i=0;i<7;i++){
+							tmpDate.setDate(tmpDate.getDate()+1);
+							if(tmpDate<this.lastDate){
+								continue;
+							}	
+							month = this.monthsNames[tmpDate.getMonth()];
+							if(this.commitsByMonth[month]){
+								this.commitsByMonth[month] = this.commitsByMonth[month] + (week.days[i]);
+							}else{
+								this.commitsByMonth[month] = (week.days[i]);
+							}      
+						}				            		
             	}
 				console.log(this.commitsByMonth);
         },
@@ -84,7 +92,7 @@
 			data.addColumn('number', 'Commits');
 			var rows = [];
 			for(prop in argument){
-				rows.push([this.monthsNames[prop] , argument[prop] ])
+				rows.push([ prop , argument[prop] ])
 			}
 
             data.addRows(rows);
