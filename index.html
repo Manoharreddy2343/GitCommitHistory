@@ -55,18 +55,27 @@
         setRepoAddr: function(addr){
           this.repoAddress = `https://api.github.com/repos/${addr}/stats/commit_activity`;
         },
+		daysInMonth : function(month,year) {
+    		return new Date(year, month, 0).getDate();
+		},
         convertToMonthWise : function(response){
+			    console.log(response);
             	let prevMonth = 0;
             	for(let i =0; i < response.length; i++){
             		let week = response[i];
             		let tmpDate = new Date(week.week*1000);
             		let month = tmpDate.getMonth();
+					let noOfDays = this.daysInMonth(month, tmpDate.getFullYear());
+					if(tmpDate.getDate() + 7 > noOfDays){
+						console.log("change if months in the week of "+tmpDate);
+					}
             		if(this.commitsByMonth[month]){
             			this.commitsByMonth[month] = this.commitsByMonth[month] + (week.days).reduce((a, b) => a + b, 0);
             		}else{
             			this.commitsByMonth[month] = (week.days).reduce((a, b) => a + b, 0);
             		}
             	}
+				console.log(this.commitsByMonth);
         },
         generateGraph : function (argument) {
        	    var data = new google.visualization.DataTable();
