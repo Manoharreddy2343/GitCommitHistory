@@ -1,0 +1,112 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+
+<style>
+	#curve_chart{
+		margin: auto;
+	}
+	.flex{
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+	}
+    .input{
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 4px;
+    }
+    .button{
+    background: #F44336;
+    color: #fff;
+    border: 1px solid #e91313;
+    border-radius: 3px;
+    padding: 7px;
+    margin-left: 5px;
+    }
+</style>
+	
+        <div id="form" class="flex">
+        	<input type="text" class="input" id="repovalue" placeholder=":owner/:repo_name" />
+        	 <button class="button" id="mapgen">Generate</button>
+        </div>
+
+	    <div id="curve_chart" style="width: 900px; height: 500px"></div>
+
+   <script>
+
+
+    var Generate = {
+    	repoAddress : "https://api.github.com/repos/tensorflow/tensorflow/stats/commit_activity",
+        monthsNames : ['Jan','Feb','March','April','May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+   	    commitsByMonth : {},
+   	    drawChart : function(){
+   	    	console.log(this.repoAddress);
+   	    	 $.get(this.repoAddress, (response)=> {
+                   this.convertToMonthWise(response);
+                   this.generateGraph(this.commitsByMonth);
+               }).fail(function() {
+				    alert( "No repository found!" );
+				  });	
+   	    },
+        setRepoAddr: function(addr){
+          this.repoAddress = `https://api.github.com/repos/${addr}/stats/commit_activity`;
+        },
+        convertToMonthWise : function(response){
+            	let prevMonth = 0;
+            	for(let i =0; i < response.length; i++){
+            		let week = response[i];
+            		let tmpDate = new Date(week.week*1000);
+            		let month = tmpDate.getMonth();
+            		if(this.commitsByMonth[month]){
+            			this.commitsByMonth[month] = this.commitsByMonth[month] + (week.days).reduce((a, b) => a + b, 0);
+            		}else{
+            			this.commitsByMonth[month] = (week.days).reduce((a, b) => a + b, 0);
+            		}
+            	}
+        },
+        generateGraph : function (argument) {
+       	    var data = new google.visualization.DataTable();
+			// Declare columns
+			data.addColumn('string', 'Month');
+			data.addColumn('number', 'Commits');
+			var rows = [];
+			for(prop in argument){
+				rows.push([this.monthsNames[prop] , argument[prop] ])
+			}
+
+            data.addRows(rows);
+
+	        var options = {
+	          title: 'Commit history',
+	          legend: { position: 'bottom' },
+	           pointSize: 8
+	        };
+
+	        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+	        chart.draw(data, options);
+       },
+          clearcommitsByMonth : function(){
+       	  this.commitsByMonth = {};
+       }         
+    }
+
+       $(function(){
+
+       		google.charts.load('current', {'packages':['corechart']});
+      		google.charts.setOnLoadCallback(Generate.drawChart.bind(Generate));
+
+      		$("#mapgen").click(()=>{
+      			Generate.clearcommitsByMonth();
+                Generate.setRepoAddr($("#repovalue").val());
+      		    Generate.drawChart();
+      		})
+
+       });
+   </script>
+
+</body>
+</html>
